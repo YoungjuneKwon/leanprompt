@@ -1,3 +1,43 @@
+Metadata-Version: 2.4
+Name: leanprompt
+Version: 0.1.1
+Summary: A FastAPI-based LLM integration framework for engineering-centric AI development.
+Home-page: https://github.com/yjkwon_wm2m/leanprompt
+Author: yjkwon_wm2m
+Author-email: yjkwon_wm2m@example.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Framework :: FastAPI
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: pydantic
+Requires-Dist: httpx
+Requires-Dist: pyyaml
+Requires-Dist: jinja2
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
 # LeanPrompt (Backend)
 
 **LeanPrompt** is an engineering-centric LLM integration framework based on FastAPI. It helps you use LLMs as reliable and predictable software components, not just text generators.
