@@ -1,38 +1,124 @@
 # LeanPrompt (Backend)
 
-**LeanPrompt**는 FastAPI 기반의 엔지니어링 중심 LLM 통합 프레임워크입니다. LLM을 단순한 텍스트 생성기가 아닌, 신뢰성 있고 예측 가능한 소프트웨어 컴포넌트로 활용할 수 있도록 돕습니다.
+**LeanPrompt** is an engineering-centric LLM integration framework based on FastAPI. It helps you use LLMs as reliable and predictable software components, not just text generators.
 
 ## ✨ Key Features
 
-* **FastAPI Native:** 기존 FastAPI 앱에 플러그인 형태로 즉시 통합.
-* **Markdown-Driven Prompts:** 프롬프트를 코드가 아닌 `.md` 파일로 분리하여 관리. 파일명이 곧 API 경로가 됩니다.
-* **Session-Based Context Caching:** 세션 시작 시에만 프롬프트를 전달하고 이후엔 입력값만 전송하여 토큰 비용을 획기적으로 절감합니다.
-* **Output Guardrails:** Pydantic 모델을 통한 출력 값 검증 및 자동 재시도(Retry) 로직 내장.
-* **WebSocket First:** 실시간 스트리밍 피드백을 위해 고도로 최적화된 웹소켓 통신 지원.
+* **FastAPI Native:** Integrates instantly into existing FastAPI apps as a plugin.
+* **Markdown-Driven Prompts:** Manage prompts as `.md` files, separated from code. Filenames become API paths.
+* **Session-Based Context Caching:** Saves token costs by sending prompts only at the start of a session and then sending only input deltas.
+* **Output Guardrails:** Built-in output validation and automatic retry logic via Pydantic models.
+* **WebSocket First:** Highly optimized WebSocket support for real-time streaming feedback.
 
 ## 🚀 Quick Start
 
 ### Installation
+
 ```bash
 pip install leanprompt
 ```
 
 ### Usage
+
 ```python
 from fastapi import FastAPI
 from leanprompt import LeanPrompt, Guard
 from pydantic import BaseModel
 
 app = FastAPI()
-lp = LeanPrompt(app, provider="deepseek")
+lp = LeanPrompt(app, provider="openai", api_key="your_api_key_here")
 
 class ResponseModel(BaseModel):
     answer: str
     confidence: float
 
-# prompts/ask_me.md 파일을 로드하여 /ask 경로 생성
+# Create /ask route by loading prompts/ask_me.md
 @lp.route("/ask", prompt_file="ask_me.md")
 @Guard.validate(ResponseModel)
 async def handle_ask(user_input: str):
-    return {"input": user_input}
+    pass # The return value is handled by LeanPrompt logic
 ```
+
+### Using Local LLM (Ollama)
+
+You can use local LLMs like Qwen 2.5 Coder or DeepSeek-Coder-V2 via [Ollama](https://ollama.com).
+
+1.  Install and run Ollama:
+    ```bash
+    ollama run qwen2.5-coder
+    ```
+
+2.  Initialize LeanPrompt with `ollama` provider:
+    ```python
+    lp = LeanPrompt(
+        app, 
+        provider="ollama", 
+        base_url="http://localhost:11434", # Optional, defaults to this
+        model="qwen2.5-coder" # Specify the model name here or in prompt frontmatter
+    )
+    ```
+
+## 📂 Project Structure
+
+```
+leanprompt/
+├── leanprompt/          # Main library code
+│   ├── core.py          # Core logic (FastAPI integration)
+│   ├── guard.py         # Validation logic
+│   └── providers/       # LLM provider implementations
+├── examples/            # Usage examples
+│   ├── main.py          # Example FastAPI app
+│   └── prompts/         # Example prompt files
+├── tests/               # Unit tests
+├── setup.py             # Package installation script
+└── requirements.txt     # Dependencies
+```
+
+## 🏃 Running the Example
+
+1.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Set Environment Variable:**
+    ```bash
+    export LEANPROMPT_LLM_KEY="your_openai_api_key"
+    ```
+
+3.  **Run the Example Server:**
+    ```bash
+    # Run from the root directory
+    export PYTHONPATH=$PYTHONPATH:$(pwd)
+    python examples/main.py
+    ```
+
+4.  **Test the Endpoints:**
+
+    *   **Calculation (Add):**
+        ```bash
+        curl -X POST "http://localhost:8000/calc/add" \
+             -H "Content-Type: application/json" \
+             -d '{"message": "50 + 50"}'
+        ```
+
+    *   **Calculation (Multiply):**
+        ```bash
+        curl -X POST "http://localhost:8000/calc/multiply" \
+             -H "Content-Type: application/json" \
+             -d '{"message": "10 * 5"}'
+        ```
+
+    *   **Mood Analysis (JSON):**
+        ```bash
+        curl -X POST "http://localhost:8000/mood/json" \
+             -H "Content-Type: application/json" \
+             -d '{"message": "I am feeling great today!"}'
+        ```
+
+    *   **Mood Analysis (YAML):**
+        ```bash
+        curl -X POST "http://localhost:8000/mood/yaml" \
+             -H "Content-Type: application/json" \
+             -d '{"message": "I am a bit tired."}'
+        ```
