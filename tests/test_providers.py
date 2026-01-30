@@ -4,7 +4,6 @@ These tests verify that the providers are correctly initialized and configured.
 """
 
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
 from fastapi import FastAPI
 from leanprompt import LeanPrompt
 from leanprompt.providers.vllm import VLLMProvider
