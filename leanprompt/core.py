@@ -8,6 +8,8 @@ from .providers.deepseek import DeepSeekProvider
 from .providers.openai import OpenAIProvider
 from .providers.google import GoogleProvider
 from .providers.ollama import OllamaProvider
+from .providers.vllm import VLLMProvider
+from .providers.llama_cpp import LlamaCppProvider
 from .providers.base import BaseProvider
 from .guard import Guard
 
@@ -50,16 +52,16 @@ class LeanPrompt:
         elif provider == "vllm":
             if not base_url:
                 raise ValueError("base_url is required for vLLM provider.")
-            # vLLM is OpenAI-compatible
-            self.provider = OpenAIProvider(
-                api_key=api_key or "vllm", base_url=base_url, **provider_kwargs
+            # vLLM is OpenAI-compatible, use dedicated provider for clarity
+            self.provider = VLLMProvider(
+                base_url=base_url, api_key=api_key, **provider_kwargs
             )
         elif provider == "llama-cpp":
             if not base_url:
                 raise ValueError("base_url is required for llama-cpp-python provider.")
-            # llama-cpp-python server is OpenAI-compatible
-            self.provider = OpenAIProvider(
-                api_key=api_key or "llama-cpp", base_url=base_url, **provider_kwargs
+            # llama-cpp-python server is OpenAI-compatible, use dedicated provider
+            self.provider = LlamaCppProvider(
+                base_url=base_url, api_key=api_key, **provider_kwargs
             )
         else:
             raise ValueError(f"Unsupported provider: {provider}")

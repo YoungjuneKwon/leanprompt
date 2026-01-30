@@ -58,6 +58,58 @@ You can use local LLMs like Qwen 2.5 Coder or DeepSeek-Coder-V2 via [Ollama](htt
     )
     ```
 
+### Using vLLM
+
+[vLLM](https://github.com/vllm-project/vllm) is a high-throughput and memory-efficient inference engine for LLMs with OpenAI-compatible API.
+
+1.  Install and run vLLM server:
+    ```bash
+    # Install vLLM
+    pip install vllm
+    
+    # Start vLLM server (with optional authentication)
+    vllm serve NousResearch/Meta-Llama-3-8B-Instruct --dtype auto --api-key your-secret-key
+    
+    # Or without authentication (for local development only)
+    vllm serve NousResearch/Meta-Llama-3-8B-Instruct --dtype auto
+    ```
+
+2.  Initialize LeanPrompt with `vllm` provider:
+    ```python
+    lp = LeanPrompt(
+        app,
+        provider="vllm",
+        base_url="http://localhost:8000/v1",
+        api_key="your-secret-key"  # Optional if server doesn't require auth
+    )
+    ```
+
+### Using llama-cpp-python
+
+[llama-cpp-python](https://github.com/abetlen/llama-cpp-python) provides OpenAI-compatible server for GGUF models.
+
+1.  Install and run llama-cpp-python server:
+    ```bash
+    # Install llama-cpp-python with server support
+    pip install 'llama-cpp-python[server]'
+    
+    # Start server (with optional authentication)
+    python -m llama_cpp.server --model path/to/model.gguf --api-key your-secret-key
+    
+    # Or without authentication (for local development only)
+    python -m llama_cpp.server --model path/to/model.gguf
+    ```
+
+2.  Initialize LeanPrompt with `llama-cpp` provider:
+    ```python
+    lp = LeanPrompt(
+        app,
+        provider="llama-cpp",
+        base_url="http://localhost:8000/v1",
+        api_key="your-secret-key"  # Optional if server doesn't require auth
+    )
+    ```
+
 ## 📂 Project Structure
 
 ```
