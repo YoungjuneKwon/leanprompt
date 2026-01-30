@@ -104,8 +104,9 @@ async def test_websocket_routing_and_context():
 
         # Validation: Check if response contains correct sum in JSON format
         # Note: Response is string inside "response" key.
-        # Example: {"response": '{"result": 30}'}
+        # Example: {"response": '{"result": 30}', "path": "/add"}
         assert "30" in resp_add["response"]
+        assert resp_add["path"] == "/add"
 
         # 2. Request to /multiply path (Multiply Prompt)
         req_mult = {"path": "/multiply", "message": "5 * 5"}
@@ -113,6 +114,7 @@ async def test_websocket_routing_and_context():
         resp_mult = websocket.receive_json()
         print(f"[WS Mult] {resp_mult}")
         assert "25" in resp_mult["response"]
+        assert resp_mult["path"] == "/multiply"
 
         # 3. Context Chaining Test on /test_markdown
         # Prompt: word_relationships.md (Linguist, user provides 3 words, explains meaning/relationship)
@@ -121,6 +123,7 @@ async def test_websocket_routing_and_context():
         websocket.send_json(req_chat1)
         resp_chat1 = websocket.receive_json()
         print(f"[WS Chat 1] {resp_chat1}")
+        assert resp_chat1["path"] == "/test_markdown"
 
         # Turn 2 (Follow-up)
         # We ask something referring to previous context, e.g., "What color are they?"
@@ -128,6 +131,7 @@ async def test_websocket_routing_and_context():
         websocket.send_json(req_chat2)
         resp_chat2 = websocket.receive_json()
         print(f"[WS Chat 2] {resp_chat2}")
+        assert resp_chat2["path"] == "/test_markdown"
 
         # Validation: The response should mention Red/Yellow/etc. proving it remembers "apple, banana, cherry"
         # Simple keyword check

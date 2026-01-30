@@ -102,18 +102,23 @@ class LeanPrompt:
 
                         if not path or not user_input:
                             await websocket.send_json(
-                                {"error": "Fields 'path' and 'message' are required"}
+                                {
+                                    "error": "Fields 'path' and 'message' are required",
+                                    "path": path,
+                                }
                             )
                             continue
                     except Exception:
-                        await websocket.send_json({"error": "Invalid JSON format"})
+                        await websocket.send_json(
+                            {"error": "Invalid JSON format", "path": None}
+                        )
                         continue
 
                     # Lookup prompt file from routes_info
                     prompt_file = self.routes_info.get(path)
                     if not prompt_file:
                         await websocket.send_json(
-                            {"error": f"No route found for path: {path}"}
+                            {"error": f"No route found for path: {path}", "path": path}
                         )
                         continue
 
@@ -122,7 +127,10 @@ class LeanPrompt:
                         config, system_prompt = self._load_prompt(prompt_file)
                     except FileNotFoundError:
                         await websocket.send_json(
-                            {"error": f"Prompt file not found: {prompt_file}"}
+                            {
+                                "error": f"Prompt file not found: {prompt_file}",
+                                "path": path,
+                            }
                         )
                         continue
 
@@ -173,7 +181,7 @@ class LeanPrompt:
                         # await websocket.send_json({"response": chunk, "partial": True})
 
                     # Send final complete response as requested
-                    await websocket.send_json({"response": full_response})
+                    await websocket.send_json({"response": full_response, "path": path})
 
                     # Update History (Context Caching)
                     history.append({"role": "user", "content": user_input})

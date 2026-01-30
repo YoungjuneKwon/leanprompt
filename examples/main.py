@@ -19,9 +19,14 @@ class CalculationResult(BaseModel):
 app = FastAPI()
 
 # Initialize LeanPrompt
-# Note: Ensure LEANPROMPT_LLM_KEY is set in environment variables
-api_key = os.getenv("LEANPROMPT_LLM_KEY")
-lp = LeanPrompt(app, provider="openai", prompt_dir="examples/prompts", api_key=api_key)
+# Parse env var: LEANPROMPT_LLM_PROVIDER=openai|api_key
+# Default to openai|dummy_key if not set, though connection will fail without real key
+provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
+provider_name, api_key = provider_env.split("|", 1)
+
+lp = LeanPrompt(
+    app, provider=provider_name, prompt_dir="examples/prompts", api_key=api_key
+)
 
 
 @lp.route("/calc/add", prompt_file="add.md")

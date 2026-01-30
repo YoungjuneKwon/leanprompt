@@ -29,8 +29,11 @@ import os
 app = FastAPI()
 
 # Initialize LeanPrompt with your preferred provider
-api_key = os.getenv("LEANPROMPT_LLM_KEY")
-lp = LeanPrompt(app, provider="openai", prompt_dir="prompts", api_key=api_key)
+# Configure via environment variable: LEANPROMPT_LLM_PROVIDER="provider|api_key"
+provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
+provider_name, api_key = provider_env.split("|", 1)
+
+lp = LeanPrompt(app, provider=provider_name, prompt_dir="prompts", api_key=api_key)
 
 # Define output model for validation
 class CalculationResult(BaseModel):
@@ -66,8 +69,9 @@ class CalculationResult(BaseModel):
 app = FastAPI()
 
 # Initialize LeanPrompt
-api_key = os.getenv("LEANPROMPT_LLM_KEY")
-lp = LeanPrompt(app, provider="openai", prompt_dir="examples/prompts", api_key=api_key)
+provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
+provider_name, api_key = provider_env.split("|", 1)
+lp = LeanPrompt(app, provider=provider_name, prompt_dir="examples/prompts", api_key=api_key)
 
 @lp.route("/calc/add", prompt_file="add.md")
 @Guard.validate(CalculationResult)
@@ -155,7 +159,9 @@ leanprompt/
 
 2.  **Set Environment Variable:**
     ```bash
-    export LEANPROMPT_LLM_KEY="your_openai_api_key"
+    # Format: provider|api_key
+    export LEANPROMPT_LLM_PROVIDER="openai|your_openai_api_key"
+    
     # Or for DeepSeek:
     export LEANPROMPT_LLM_PROVIDER="deepseek|your_deepseek_api_key"
     ```
@@ -213,6 +219,7 @@ import json
 
 def on_message(ws, message):
     response = json.loads(message)
+    print(f"Path: {response.get('path')}")
     print(f"Response: {response['response']}")
 
 ws = websocket.WebSocketApp(
