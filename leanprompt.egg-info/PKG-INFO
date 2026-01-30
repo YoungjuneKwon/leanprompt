@@ -2,9 +2,9 @@ Metadata-Version: 2.4
 Name: leanprompt
 Version: 0.1.1
 Summary: A FastAPI-based LLM integration framework for engineering-centric AI development.
-Home-page: https://github.com/yjkwon_wm2m/leanprompt
-Author: yjkwon_wm2m
-Author-email: yjkwon_wm2m@example.com
+Home-page: https://github.com/YoungjuneKwon/leanprompt
+Author: Youngjune Kwon
+Author-email: yjkwon@winm2m.com
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: MIT License

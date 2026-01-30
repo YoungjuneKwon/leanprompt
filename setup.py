@@ -6,12 +6,12 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="leanprompt",
     version="0.1.1",
-    author="yjkwon_wm2m",
-    author_email="yjkwon_wm2m@example.com",
+    author="Youngjune Kwon",
+    author_email="yjkwon@winm2m.com",
     description="A FastAPI-based LLM integration framework for engineering-centric AI development.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yjkwon_wm2m/leanprompt",
+    url="https://github.com/YoungjuneKwon/leanprompt",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
