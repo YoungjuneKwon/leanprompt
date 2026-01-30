@@ -4,11 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'leanprompt/**'
       - 'setup.py'
-      - 'requirements.txt'
-      - 'README.md'
-      - 'LICENSE'
   
   workflow_dispatch:
     inputs:
