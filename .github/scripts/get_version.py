@@ -8,8 +8,7 @@ with open("setup.py", "r") as f:
 match = re.search(r'version=[\'"]([^\'"]+)[\'"]', content)
 if match:
     version = match.group(1)
-    print(f"VERSION={version}")
-    print(f"Version found: {version}")
+    print(f"version={version}")
     sys.exit(0)
 else:
     print("Version not found in setup.py", file=sys.stderr)

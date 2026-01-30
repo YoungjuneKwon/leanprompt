@@ -38,11 +38,13 @@ jobs:
       id: version
       run: |
         python .github/scripts/get_version.py >> $GITHUB_OUTPUT
+        VERSION="${{ steps.version.outputs.version }}"
+        echo "Extracted version: $VERSION"
     
     - name: Check if version already exists on PyPI
       id: check_version
       run: |
-        VERSION=$(echo '${{ steps.version.outputs.VERSION }}' | grep -o 'VERSION=[^[:space:]]*' | cut -d'=' -f2)
+        VERSION="${{ steps.version.outputs.version }}"
         echo "Checking version $VERSION on PyPI..."
         
         HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/leanprompt/$VERSION/json")
@@ -72,15 +74,15 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ steps.version.outputs.VERSION }}
-        release_name: LeanPrompt v${{ steps.version.outputs.VERSION }}
+        tag_name: v${{ steps.version.outputs.version }}
+        release_name: LeanPrompt v${{ steps.version.outputs.version }}
         body: |
-          ## LeanPrompt v${{ steps.version.outputs.VERSION }}
+          ## LeanPrompt v${{ steps.version.outputs.version }}
           
           This version has been automatically deployed to PyPI.
           
           ### Installation
-          pip install leanprompt==${{ steps.version.outputs.VERSION }}
+          pip install leanprompt==${{ steps.version.outputs.version }}
           
           ### Changes
           - FastAPI-based LLM integration framework
@@ -94,5 +96,5 @@ jobs:
     - name: Skip deployment notification
       if: steps.check_version.outputs.exists == 'true'
       run: |
-        echo "Skipping deployment - version ${{ steps.version.outputs.VERSION }} already exists on PyPI"
+        echo "Skipping deployment - version ${{ steps.version.outputs.version }} already exists on PyPI"
         echo "To deploy a new version, update version in setup.py"
