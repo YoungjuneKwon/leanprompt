@@ -1,3 +1,4 @@
 *.pyc
 dist/**
 leanprompt.egg-info/**
+server.log
