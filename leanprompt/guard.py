@@ -63,7 +63,6 @@ class Guard:
         def decorator(func: Callable):
             @functools.wraps(func)
             async def wrapper(*args, **kwargs):
-                func._auth_validator = validator_func
                 return await func(*args, **kwargs)
 
             wrapper._auth_validator = validator_func

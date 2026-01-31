@@ -35,9 +35,11 @@ class LeanPrompt:
         self.max_retries = max_retries
         self.api_prefix = self._normalize_prefix(api_prefix)
         ws_path_input = ws_path or "/ws"
-        self.ws_path = self._normalize_ws_path(ws_path_input)
-        if self.api_prefix and ws_path_input and not ws_path_input.startswith("/"):
-            self.ws_path = self._apply_prefix(self.ws_path)
+        normalized_ws_path = self._normalize_ws_path(ws_path_input)
+        is_relative_ws = bool(ws_path_input) and not ws_path_input.startswith("/")
+        if self.api_prefix and is_relative_ws:
+            normalized_ws_path = self._apply_prefix(normalized_ws_path)
+        self.ws_path = normalized_ws_path
         self.ws_auth = ws_auth
 
         # Initialize provider

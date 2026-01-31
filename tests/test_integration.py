@@ -164,3 +164,18 @@ def test_secure_route_requires_jwt():
 
     response = client.post("/api/secure/add", json={"message": "1 + 1"})
     assert response.status_code == 401
+
+    with patch(
+        "leanprompt.providers.openai.OpenAIProvider.generate",
+        new=AsyncMock(return_value='{"result": 2}'),
+    ), patch(
+        "leanprompt.providers.deepseek.DeepSeekProvider.generate",
+        new=AsyncMock(return_value='{"result": 2}'),
+    ):
+        response = client.post(
+            "/api/secure/add",
+            json={"message": "1 + 1"},
+            headers={"Authorization": "Bearer test"},
+        )
+        assert response.status_code == 200
+        assert response.json() == {"result": 2}
