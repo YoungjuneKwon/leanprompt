@@ -104,7 +104,7 @@ def require_jwt(request: Request) -> bool:
     return bool(request.headers.get("authorization"))
 
 @lp.route("/secure/add", prompt_file="add.md")
-@Guard.jwt(require_jwt)
+@Guard.auth(require_jwt)
 @Guard.validate(CalculationResult)
 async def secure_add(user_input: str):
     pass
