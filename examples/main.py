@@ -28,16 +28,14 @@ api_prefix = os.getenv("LEANPROMPT_API_PREFIX", "")
 ws_path = os.getenv("LEANPROMPT_WS_PATH", "/ws")
 
 
-def require_jwt(request: Request) -> bool:
-    # NOTE: Example only. Replace with real JWT signature/claims validation.
-    # Example: jwt.decode(token, key, algorithms=["HS256"])
-    return bool(request.headers.get("authorization"))
+def _extract_auth_header(payload: Request | WebSocket) -> str:
+    return payload.headers.get("authorization", "")
 
 
-def require_ws_jwt(websocket: WebSocket) -> bool:
-    # NOTE: Example only. Replace with real JWT signature/claims validation.
+def require_jwt(payload: Request | WebSocket) -> bool:
+    # NOTE: Example only. Insecure for production. Validate JWT signature, expiry, and claims.
     # Example: jwt.decode(token, key, algorithms=["HS256"])
-    return bool(websocket.headers.get("authorization"))
+    return bool(_extract_auth_header(payload))
 
 
 lp = LeanPrompt(
@@ -47,7 +45,7 @@ lp = LeanPrompt(
     api_key=api_key,
     api_prefix=api_prefix,
     ws_path=ws_path,
-    ws_auth=require_ws_jwt,
+    ws_auth=require_jwt,
 )
 
 
@@ -70,7 +68,7 @@ async def multiply(user_input: str):
 
 
 @lp.route("/secure/add", prompt_file="add.md")
-@Guard.jwt(require_jwt)
+@Guard.auth(require_jwt)
 @Guard.validate(CalculationResult)
 async def secure_add(user_input: str):
     """

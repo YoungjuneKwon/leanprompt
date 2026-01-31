@@ -10,7 +10,7 @@ class Guard:
     ) -> None:
         attrs = ["_output_model", "_custom_validator"]
         if include_auth:
-            attrs.insert(0, "_auth_validator")
+            attrs.append("_auth_validator")
         for attr in attrs:
             if hasattr(source, attr):
                 setattr(target, attr, getattr(source, attr))
@@ -65,7 +65,7 @@ class Guard:
         return decorator
 
     @staticmethod
-    def jwt(validator_func: Callable[[Any], Any]):
+    def auth(validator_func: Callable[[Any], Any]):
         """Attach an auth validator (e.g., JWT check) to a LeanPrompt route."""
         def decorator(func: Callable):
             @functools.wraps(func)
@@ -77,6 +77,11 @@ class Guard:
             return wrapper
 
         return decorator
+
+    @staticmethod
+    def jwt(validator_func: Callable[[Any], Any]):
+        """Backward-compatible alias for Guard.auth()."""
+        return Guard.auth(validator_func)
 
     @staticmethod
     def parse_and_validate(content: str, model: Type[BaseModel]) -> BaseModel:

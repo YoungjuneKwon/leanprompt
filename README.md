@@ -99,7 +99,7 @@ from fastapi import Request
 from leanprompt import Guard
 
 def require_jwt(request: Request) -> bool:
-    # Example only. Replace with real JWT validation.
+    # Example only. Insecure for production; validate signature, expiry, and claims.
     return bool(request.headers.get("authorization"))
 
 @lp.route("/secure/add", prompt_file="add.md")
@@ -115,7 +115,7 @@ For WebSocket authentication, pass a validation hook when you construct `LeanPro
 from fastapi import WebSocket
 
 def require_ws_jwt(websocket: WebSocket) -> bool:
-    # Example only. Replace with real JWT validation.
+    # Example only. Insecure for production; validate signature, expiry, and claims.
     return bool(websocket.headers.get("authorization"))
 
 lp = LeanPrompt(

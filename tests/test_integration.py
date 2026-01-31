@@ -27,7 +27,7 @@ def create_app():
     provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
     provider_name, api_key = provider_env.split("|")
 
-    def check_auth_header(request: Request) -> bool:
+    def has_auth_header(request: Request) -> bool:
         # Test helper: only checks for header presence.
         return bool(request.headers.get("authorization"))
 
@@ -56,7 +56,7 @@ def create_app():
         pass
 
     @lp.route("/secure/add", prompt_file="add.md")
-    @Guard.jwt(check_auth_header)
+    @Guard.auth(has_auth_header)
     @Guard.validate(CalculationResult)
     async def secure_add(user_input: str):
         pass
@@ -166,7 +166,7 @@ def test_secure_route_requires_jwt():
     response = client.post("/api/secure/add", json={"message": "1 + 1"})
     assert response.status_code == 401
 
-    with patch_auth_provider_response():
+    with patch_llm_response():
         response = client.post(
             "/api/secure/add",
             json={"message": "1 + 1"},
@@ -177,7 +177,7 @@ def test_secure_route_requires_jwt():
 
 
 @contextmanager
-def patch_auth_provider_response():
+def patch_llm_response():
     with ExitStack() as stack:
         stack.enter_context(
             patch(
