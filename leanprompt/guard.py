@@ -66,6 +66,7 @@ class Guard:
 
     @staticmethod
     def jwt(validator_func: Callable[[Any], Any]):
+        """Attach an auth validator (e.g., JWT check) to a LeanPrompt route."""
         def decorator(func: Callable):
             @functools.wraps(func)
             async def wrapper(*args, **kwargs):

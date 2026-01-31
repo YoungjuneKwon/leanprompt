@@ -30,11 +30,13 @@ ws_path = os.getenv("LEANPROMPT_WS_PATH", "/ws")
 
 def require_jwt(request: Request) -> bool:
     # NOTE: Example only. Replace with real JWT signature/claims validation.
+    # Example: jwt.decode(token, key, algorithms=["HS256"])
     return bool(request.headers.get("authorization"))
 
 
 def require_ws_jwt(websocket: WebSocket) -> bool:
     # NOTE: Example only. Replace with real JWT signature/claims validation.
+    # Example: jwt.decode(token, key, algorithms=["HS256"])
     return bool(websocket.headers.get("authorization"))
 
 

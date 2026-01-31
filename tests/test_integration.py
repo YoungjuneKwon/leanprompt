@@ -27,7 +27,7 @@ def create_app():
     provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
     provider_name, api_key = provider_env.split("|")
 
-    def require_jwt(request: Request) -> bool:
+    def check_auth_header(request: Request) -> bool:
         # Test helper: only checks for header presence.
         return bool(request.headers.get("authorization"))
 
@@ -56,7 +56,7 @@ def create_app():
         pass
 
     @lp.route("/secure/add", prompt_file="add.md")
-    @Guard.jwt(require_jwt)
+    @Guard.jwt(check_auth_header)
     @Guard.validate(CalculationResult)
     async def secure_add(user_input: str):
         pass
