@@ -1,9 +1,20 @@
 import functools
-from typing import Type, Any, Callable
+from typing import Type, Any, Callable, Union
+from fastapi import Request, WebSocket
 from pydantic import BaseModel, ValidationError
 
 
 class Guard:
+    @staticmethod
+    def _copy_auth_metadata(
+        source: Callable, target: Callable, *, include_auth: bool = True
+    ) -> None:
+        attrs = ["_output_model", "_custom_validator"]
+        if include_auth:
+            attrs.append("_auth_validator")
+        for attr in attrs:
+            if hasattr(source, attr):
+                setattr(target, attr, getattr(source, attr))
     @staticmethod
     def pydantic(model: Type[BaseModel]):
         """Returns a validator function that parses JSON into a Pydantic model."""
@@ -35,6 +46,7 @@ class Guard:
                 return await func(*args, **kwargs)
 
             wrapper._output_model = model
+            Guard._copy_auth_metadata(func, wrapper)
             return wrapper
 
         return decorator
@@ -48,9 +60,29 @@ class Guard:
                 return await func(*args, **kwargs)
 
             wrapper._custom_validator = validator_func
+            Guard._copy_auth_metadata(func, wrapper)
             return wrapper
 
         return decorator
+
+    @staticmethod
+    def auth(validator_func: Callable[[Union[Request, WebSocket]], Any]):
+        """Attach an auth validator (e.g., JWT check) to a LeanPrompt route."""
+        def decorator(func: Callable):
+            @functools.wraps(func)
+            async def wrapper(*args, **kwargs):
+                return await func(*args, **kwargs)
+
+            wrapper._auth_validator = validator_func
+            Guard._copy_auth_metadata(func, wrapper, include_auth=False)
+            return wrapper
+
+        return decorator
+
+    @staticmethod
+    def jwt(validator_func: Callable[[Union[Request, WebSocket]], Any]):
+        """Alias for Guard.auth() for JWT-style authentication."""
+        return Guard.auth(validator_func)
 
     @staticmethod
     def parse_and_validate(content: str, model: Type[BaseModel]) -> BaseModel:

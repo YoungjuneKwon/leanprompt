@@ -47,6 +47,88 @@ async def add(user_input: str):
     pass  # LeanPrompt handles the logic
 ```
 
+### API Prefix and WebSocket Path
+
+You can apply a shared prefix to all LeanPrompt routes and the WebSocket endpoint:
+
+```python
+app = FastAPI()
+
+lp = LeanPrompt(
+    app,
+    provider=provider_name,
+    prompt_dir="prompts",
+    api_key=api_key,
+    api_prefix="/api",
+    ws_path="ws",  # relative -> /api/ws/{client_id}
+)
+
+@lp.route("/calc/add", prompt_file="add.md")
+async def add(user_input: str):
+    pass
+```
+
+Clients can keep using the same LeanPrompt path value (`/calc/add`) while connecting to
+`ws://localhost:8000/api/ws/{client_id}`.
+
+Using an absolute `ws_path` (e.g., `"/ws"`) keeps the WebSocket route outside the
+`api_prefix`. Avoid `ws_path="/"` to prevent route collisions.
+
+If you already configure a FastAPI router prefix, LeanPrompt can attach to it directly:
+
+```python
+app = FastAPI()
+api = FastAPI()
+app.mount("/api", api)
+
+lp = LeanPrompt(
+    api,
+    provider=provider_name,
+    prompt_dir="prompts",
+    api_key=api_key,
+    ws_path="/ws",  # -> /api/ws/{client_id}
+)
+```
+
+### JWT Annotation Example
+
+LeanPrompt routes can reuse a JWT validator annotation for HTTP requests:
+
+```python
+from fastapi import Request
+from leanprompt import Guard
+
+def require_jwt(request: Request) -> bool:
+    # Example only. Insecure for production; validate signature, expiry, and claims.
+    # Example: jwt.decode(token, key, algorithms=["HS256"])
+    return bool(request.headers.get("authorization"))
+
+@lp.route("/secure/add", prompt_file="add.md")
+@Guard.auth(require_jwt)
+@Guard.validate(CalculationResult)
+async def secure_add(user_input: str):
+    pass
+```
+
+For WebSocket authentication, pass a validation hook when you construct `LeanPrompt`:
+
+```python
+from fastapi import WebSocket
+
+def require_ws_jwt(websocket: WebSocket) -> bool:
+    # Example only. Insecure for production; validate signature, expiry, and claims.
+    # Example: jwt.decode(token, key, algorithms=["HS256"])
+    return bool(websocket.headers.get("authorization"))
+
+lp = LeanPrompt(
+    app,
+    provider=provider_name,
+    prompt_dir="prompts",
+    api_key=api_key,
+    ws_auth=require_ws_jwt,
+)
+```
+
 ### Complete Example Server
 
 Here's a full example with multiple endpoints:

@@ -1,9 +1,8 @@
 import os
 import pytest
-import asyncio
-import json
+from contextlib import contextmanager, ExitStack
 from unittest.mock import patch, AsyncMock
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 from leanprompt import LeanPrompt, Guard
@@ -28,8 +27,18 @@ def create_app():
     provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
     provider_name, api_key = provider_env.split("|")
 
+    def has_authorization_header(payload: Request | WebSocket) -> bool:
+        # Test helper: only checks for header presence.
+        return bool(payload.headers.get("authorization"))
+
     lp = LeanPrompt(
-        app, provider=provider_name, prompt_dir="examples/prompts", api_key=api_key
+        app,
+        provider=provider_name,
+        prompt_dir="examples/prompts",
+        api_key=api_key,
+        api_prefix="/api",
+        ws_path="ws",
+        ws_auth=has_authorization_header,
     )
 
     @lp.route("/add", prompt_file="add.md")
@@ -40,6 +49,12 @@ def create_app():
     @lp.route("/multiply", prompt_file="multiply.md")
     @Guard.validate(CalculationResult)
     async def multiply(user_input: str):
+        pass
+
+    @lp.route("/secure/add", prompt_file="add.md")
+    @Guard.auth(has_authorization_header)
+    @Guard.validate(CalculationResult)
+    async def secure_add(user_input: str):
         pass
 
     @lp.route("/add_implicit")
@@ -79,6 +94,10 @@ from leanprompt.providers.openai import OpenAIProvider
 # ... (create_app logic remains mostly same, ensuring provider is mocked later)
 
 
+@pytest.mark.skipif(
+    not os.getenv("LEANPROMPT_LLM_PROVIDER"),
+    reason="LEANPROMPT_LLM_PROVIDER not set in environment",
+)
 @pytest.mark.asyncio
 async def test_websocket_routing_and_context():
     """Verify WebSocket routing based on 'path' and separate context chains per path"""
@@ -86,15 +105,12 @@ async def test_websocket_routing_and_context():
     # Run against REAL provider (env var sourced from .bashrc)
     # The tests assume the LLM will respond somewhat deterministically based on the prompt instructions.
 
-    # Ensure LEANPROMPT_LLM_PROVIDER is set
-    provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER")
-    if not provider_env:
-        pytest.skip("LEANPROMPT_LLM_PROVIDER not set in environment")
-
     app = create_app()
     client = TestClient(app)
 
-    with client.websocket_connect("/ws/test_client") as websocket:
+    with client.websocket_connect(
+        "/api/ws/test_client", headers={"Authorization": "Bearer test"}
+    ) as websocket:
         # 1. Request to /add path (Add Prompt)
         # Expected behavior: The LLM should follow add.md instructions (Calculator, JSON output)
         req_add = {"path": "/add", "message": "10 + 20"}
@@ -137,3 +153,38 @@ async def test_websocket_routing_and_context():
         # Simple keyword check
         response_text = resp_chat2["response"].lower()
         assert "red" in response_text or "yellow" in response_text
+
+
+def test_secure_route_requires_jwt():
+    app = create_app()
+    client = TestClient(app)
+
+    response = client.post("/api/secure/add", json={"message": "1 + 1"})
+    assert response.status_code == 401
+
+    with patch_llm_response():
+        response = client.post(
+            "/api/secure/add",
+            json={"message": "1 + 1"},
+            headers={"Authorization": "Bearer test"},
+        )
+        assert response.status_code == 200
+        assert response.json() == {"result": 2}
+
+
+@contextmanager
+def patch_llm_response():
+    with ExitStack() as stack:
+        stack.enter_context(
+            patch(
+                "leanprompt.providers.openai.OpenAIProvider.generate",
+                new=AsyncMock(return_value='{"result": 2}'),
+            )
+        )
+        stack.enter_context(
+            patch(
+                "leanprompt.providers.deepseek.DeepSeekProvider.generate",
+                new=AsyncMock(return_value='{"result": 2}'),
+            )
+        )
+        yield
