@@ -111,11 +111,24 @@ class LeanPrompt:
             return normalized
         return f"{self.api_prefix}{normalized}"
 
+    def _strip_prefix(self, path: str) -> str:
+        normalized = self._normalize_route_path(path)
+        if not self.api_prefix:
+            return normalized
+        if normalized == self.api_prefix:
+            return "/"
+        if normalized.startswith(f"{self.api_prefix}/"):
+            return normalized[len(self.api_prefix) :] or "/"
+        return normalized
+
     async def _run_auth_hook(self, auth_hook: Callable[[Any], Any], payload: Any) -> Any:
-        result = auth_hook(payload)
-        if inspect.isawaitable(result):
-            result = await result
-        return result
+        try:
+            result = auth_hook(payload)
+            if inspect.isawaitable(result):
+                result = await result
+            return result
+        except HTTPException:
+            raise
 
     async def _authorize_websocket(self, websocket: WebSocket) -> bool:
         if not self.ws_auth:
@@ -157,11 +170,9 @@ class LeanPrompt:
 
     def _setup_websocket(self):
         # WebSocket endpoint with Context Caching (Session Memory)
-        ws_route = (
-            f"{self.ws_path}/{{client_id}}"
-            if self.ws_path != "/"
-            else "/{client_id}"
-        )
+        if self.ws_path == "/":
+            raise ValueError("ws_path cannot be '/' to avoid route collisions.")
+        ws_route = f"{self.ws_path}/{{client_id}}"
 
         @self.app.websocket(ws_route)
         async def websocket_endpoint(websocket: WebSocket, client_id: str):
@@ -281,12 +292,7 @@ class LeanPrompt:
     ):
         def decorator(func: Callable):
             normalized_path = self._normalize_route_path(path)
-            prompt_path = normalized_path
-            if self.api_prefix and (
-                prompt_path == self.api_prefix
-                or prompt_path.startswith(f"{self.api_prefix}/")
-            ):
-                prompt_path = prompt_path[len(self.api_prefix) :] or "/"
+            prompt_path = self._strip_prefix(normalized_path)
 
             # Resolve prompt file path logic
             resolved_prompt_file = prompt_file

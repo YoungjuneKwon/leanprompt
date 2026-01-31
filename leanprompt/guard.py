@@ -5,6 +5,11 @@ from pydantic import BaseModel, ValidationError
 
 class Guard:
     @staticmethod
+    def _copy_auth_metadata(source: Callable, target: Callable) -> None:
+        for attr in ("_auth_validator", "_output_model", "_custom_validator"):
+            if hasattr(source, attr):
+                setattr(target, attr, getattr(source, attr))
+    @staticmethod
     def pydantic(model: Type[BaseModel]):
         """Returns a validator function that parses JSON into a Pydantic model."""
 
@@ -35,9 +40,7 @@ class Guard:
                 return await func(*args, **kwargs)
 
             wrapper._output_model = model
-            existing_auth = getattr(func, "_auth_validator", None)
-            if existing_auth is not None:
-                wrapper._auth_validator = existing_auth
+            Guard._copy_auth_metadata(func, wrapper)
             return wrapper
 
         return decorator
@@ -51,9 +54,7 @@ class Guard:
                 return await func(*args, **kwargs)
 
             wrapper._custom_validator = validator_func
-            existing_auth = getattr(func, "_auth_validator", None)
-            if existing_auth is not None:
-                wrapper._auth_validator = existing_auth
+            Guard._copy_auth_metadata(func, wrapper)
             return wrapper
 
         return decorator
@@ -66,12 +67,7 @@ class Guard:
                 return await func(*args, **kwargs)
 
             wrapper._auth_validator = validator_func
-            existing_output = getattr(func, "_output_model", None)
-            if existing_output is not None:
-                wrapper._output_model = existing_output
-            existing_custom = getattr(func, "_custom_validator", None)
-            if existing_custom is not None:
-                wrapper._custom_validator = existing_custom
+            Guard._copy_auth_metadata(func, wrapper)
             return wrapper
 
         return decorator

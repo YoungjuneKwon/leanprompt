@@ -71,6 +71,9 @@ async def add(user_input: str):
 Clients can keep using the same LeanPrompt path value (`/calc/add`) while connecting to
 `ws://localhost:8000/api/ws/{client_id}`.
 
+Using an absolute `ws_path` (e.g., `"/ws"`) keeps the WebSocket route outside the
+`api_prefix`. Avoid `ws_path="/"` to prevent route collisions.
+
 If you already configure a FastAPI router prefix, LeanPrompt can attach to it directly:
 
 ```python
