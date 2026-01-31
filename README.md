@@ -100,6 +100,7 @@ from leanprompt import Guard
 
 def require_jwt(request: Request) -> bool:
     # Example only. Insecure for production; validate signature, expiry, and claims.
+    # Example: jwt.decode(token, key, algorithms=["HS256"])
     return bool(request.headers.get("authorization"))
 
 @lp.route("/secure/add", prompt_file="add.md")
@@ -116,6 +117,7 @@ from fastapi import WebSocket
 
 def require_ws_jwt(websocket: WebSocket) -> bool:
     # Example only. Insecure for production; validate signature, expiry, and claims.
+    # Example: jwt.decode(token, key, algorithms=["HS256"])
     return bool(websocket.headers.get("authorization"))
 
 lp = LeanPrompt(

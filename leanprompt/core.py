@@ -2,7 +2,7 @@ import os
 import yaml
 import hashlib
 import inspect
-from typing import Optional, Type, Callable, Dict, Any, List
+from typing import Optional, Type, Callable, Dict, Any, List, Union, Awaitable
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from pydantic import BaseModel, ValidationError
 from .providers.deepseek import DeepSeekProvider
@@ -114,8 +114,8 @@ class LeanPrompt:
             normalized_ws_path = self._apply_prefix(normalized_ws_path)
         if normalized_ws_path == "/":
             raise ValueError(
-                "ws_path cannot be '/' as it would shadow all HTTP routes on the same app. "
-                "Use a path like '/ws'."
+                "ws_path cannot be '/' as it creates a catch-all WebSocket route that prevents "
+                "other routes from matching. Use a path like '/ws'."
             )
         return normalized_ws_path
 
@@ -129,11 +129,15 @@ class LeanPrompt:
             return normalized[len(self.api_prefix) :] or "/"
         return normalized
 
-    async def _run_auth_hook(self, auth_hook: Callable[[Any], Any], payload: Any) -> Any:
+    async def _run_auth_hook(
+        self,
+        auth_hook: Callable[[Union[Request, WebSocket]], Union[bool, Awaitable[bool]]],
+        payload: Union[Request, WebSocket],
+    ) -> bool:
         result = auth_hook(payload)
         if inspect.isawaitable(result):
             result = await result
-        return result
+        return bool(result)
 
     async def _authorize_websocket(self, websocket: WebSocket) -> bool:
         if not self.ws_auth:

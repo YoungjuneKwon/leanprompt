@@ -27,7 +27,7 @@ def create_app():
     provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
     provider_name, api_key = provider_env.split("|")
 
-    def has_auth_header(payload: Request | WebSocket) -> bool:
+    def has_authorization_header(payload: Request | WebSocket) -> bool:
         # Test helper: only checks for header presence.
         return bool(payload.headers.get("authorization"))
 
@@ -38,7 +38,7 @@ def create_app():
         api_key=api_key,
         api_prefix="/api",
         ws_path="ws",
-        ws_auth=has_auth_header,
+        ws_auth=has_authorization_header,
     )
 
     @lp.route("/add", prompt_file="add.md")
@@ -52,7 +52,7 @@ def create_app():
         pass
 
     @lp.route("/secure/add", prompt_file="add.md")
-    @Guard.auth(has_auth_header)
+    @Guard.auth(has_authorization_header)
     @Guard.validate(CalculationResult)
     async def secure_add(user_input: str):
         pass

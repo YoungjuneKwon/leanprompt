@@ -1,5 +1,6 @@
 import functools
-from typing import Type, Any, Callable
+from typing import Type, Any, Callable, Union
+from fastapi import Request, WebSocket
 from pydantic import BaseModel, ValidationError
 
 
@@ -65,7 +66,7 @@ class Guard:
         return decorator
 
     @staticmethod
-    def auth(validator_func: Callable[[Any], Any]):
+    def auth(validator_func: Callable[[Union[Request, WebSocket]], Any]):
         """Attach an auth validator (e.g., JWT check) to a LeanPrompt route."""
         def decorator(func: Callable):
             @functools.wraps(func)
@@ -79,7 +80,7 @@ class Guard:
         return decorator
 
     @staticmethod
-    def jwt(validator_func: Callable[[Any], Any]):
+    def jwt(validator_func: Callable[[Union[Request, WebSocket]], Any]):
         """Alias for Guard.auth() for JWT-style authentication."""
         return Guard.auth(validator_func)
 
