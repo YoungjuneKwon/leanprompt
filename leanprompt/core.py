@@ -112,6 +112,10 @@ class LeanPrompt:
         normalized_ws_path = self._normalize_ws_path(ws_path_input)
         if self.api_prefix and is_relative_ws:
             normalized_ws_path = self._apply_prefix(normalized_ws_path)
+        if normalized_ws_path == "/":
+            raise ValueError(
+                "ws_path cannot be '/' to avoid route collisions. Use a path like '/ws'."
+            )
         return normalized_ws_path
 
     def _strip_prefix(self, path: str) -> str:
@@ -125,13 +129,10 @@ class LeanPrompt:
         return normalized
 
     async def _run_auth_hook(self, auth_hook: Callable[[Any], Any], payload: Any) -> Any:
-        try:
-            result = auth_hook(payload)
-            if inspect.isawaitable(result):
-                result = await result
-            return result
-        except HTTPException:
-            raise
+        result = auth_hook(payload)
+        if inspect.isawaitable(result):
+            result = await result
+        return result
 
     async def _authorize_websocket(self, websocket: WebSocket) -> bool:
         if not self.ws_auth:
@@ -173,10 +174,6 @@ class LeanPrompt:
 
     def _setup_websocket(self):
         # WebSocket endpoint with Context Caching (Session Memory)
-        if self.ws_path == "/":
-            raise ValueError(
-                "ws_path cannot be '/' to avoid route collisions. Use a path like '/ws'."
-            )
         ws_route = f"{self.ws_path}/{{client_id}}"
 
         @self.app.websocket(ws_route)

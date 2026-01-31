@@ -1,7 +1,5 @@
 import os
 import pytest
-import asyncio
-import json
 from contextlib import contextmanager, ExitStack
 from unittest.mock import patch, AsyncMock
 from fastapi import FastAPI, Request, WebSocket
@@ -104,16 +102,12 @@ from leanprompt.providers.openai import OpenAIProvider
     not os.getenv("LEANPROMPT_LLM_PROVIDER"),
     reason="LEANPROMPT_LLM_PROVIDER not set in environment",
 )
-def test_websocket_routing_and_context():
+@pytest.mark.asyncio
+async def test_websocket_routing_and_context():
     """Verify WebSocket routing based on 'path' and separate context chains per path"""
 
     # Run against REAL provider (env var sourced from .bashrc)
     # The tests assume the LLM will respond somewhat deterministically based on the prompt instructions.
-
-    # Ensure LEANPROMPT_LLM_PROVIDER is set
-    provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER")
-    if not provider_env:
-        pytest.skip("LEANPROMPT_LLM_PROVIDER not set in environment")
 
     app = create_app()
     client = TestClient(app)
