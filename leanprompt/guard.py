@@ -5,8 +5,13 @@ from pydantic import BaseModel, ValidationError
 
 class Guard:
     @staticmethod
-    def _copy_auth_metadata(source: Callable, target: Callable) -> None:
-        for attr in ("_auth_validator", "_output_model", "_custom_validator"):
+    def _copy_auth_metadata(
+        source: Callable, target: Callable, *, include_auth: bool = True
+    ) -> None:
+        attrs = ["_output_model", "_custom_validator"]
+        if include_auth:
+            attrs.insert(0, "_auth_validator")
+        for attr in attrs:
             if hasattr(source, attr):
                 setattr(target, attr, getattr(source, attr))
     @staticmethod
@@ -67,7 +72,8 @@ class Guard:
                 return await func(*args, **kwargs)
 
             wrapper._auth_validator = validator_func
-            Guard._copy_auth_metadata(func, wrapper)
+            Guard._copy_auth_metadata(func, wrapper, include_auth=False)
+            wrapper._auth_validator = validator_func
             return wrapper
 
         return decorator

@@ -99,6 +99,10 @@ from leanprompt.providers.openai import OpenAIProvider
 # ... (create_app logic remains mostly same, ensuring provider is mocked later)
 
 
+@pytest.mark.skipif(
+    not os.getenv("LEANPROMPT_LLM_PROVIDER"),
+    reason="LEANPROMPT_LLM_PROVIDER not set in environment",
+)
 def test_websocket_routing_and_context():
     """Verify WebSocket routing based on 'path' and separate context chains per path"""
 

@@ -35,8 +35,8 @@ class LeanPrompt:
         self.max_retries = max_retries
         self.api_prefix = self._normalize_prefix(api_prefix)
         ws_path_input = ws_path or "/ws"
-        normalized_ws_path = self._normalize_ws_path(ws_path_input)
         is_relative_ws = bool(ws_path_input) and not ws_path_input.startswith("/")
+        normalized_ws_path = self._normalize_ws_path(ws_path_input)
         if self.api_prefix and is_relative_ws:
             normalized_ws_path = self._apply_prefix(normalized_ws_path)
         self.ws_path = normalized_ws_path
@@ -171,7 +171,9 @@ class LeanPrompt:
     def _setup_websocket(self):
         # WebSocket endpoint with Context Caching (Session Memory)
         if self.ws_path == "/":
-            raise ValueError("ws_path cannot be '/' to avoid route collisions.")
+            raise ValueError(
+                "ws_path cannot be '/' to avoid route collisions. Use a path like '/ws'."
+            )
         ws_route = f"{self.ws_path}/{{client_id}}"
 
         @self.app.websocket(ws_route)
