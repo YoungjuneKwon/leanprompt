@@ -73,7 +73,6 @@ class Guard:
 
             wrapper._auth_validator = validator_func
             Guard._copy_auth_metadata(func, wrapper, include_auth=False)
-            wrapper._auth_validator = validator_func
             return wrapper
 
         return decorator

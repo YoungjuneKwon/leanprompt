@@ -2,6 +2,7 @@ import os
 import pytest
 import asyncio
 import json
+from contextlib import contextmanager, ExitStack
 from unittest.mock import patch, AsyncMock
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.testclient import TestClient
@@ -171,13 +172,7 @@ def test_secure_route_requires_jwt():
     response = client.post("/api/secure/add", json={"message": "1 + 1"})
     assert response.status_code == 401
 
-    with patch(
-        "leanprompt.providers.openai.OpenAIProvider.generate",
-        new=AsyncMock(return_value='{"result": 2}'),
-    ), patch(
-        "leanprompt.providers.deepseek.DeepSeekProvider.generate",
-        new=AsyncMock(return_value='{"result": 2}'),
-    ):
+    with patch_auth_provider_response():
         response = client.post(
             "/api/secure/add",
             json={"message": "1 + 1"},
@@ -185,3 +180,21 @@ def test_secure_route_requires_jwt():
         )
         assert response.status_code == 200
         assert response.json() == {"result": 2}
+
+
+@contextmanager
+def patch_auth_provider_response():
+    with ExitStack() as stack:
+        stack.enter_context(
+            patch(
+                "leanprompt.providers.openai.OpenAIProvider.generate",
+                new=AsyncMock(return_value='{"result": 2}'),
+            )
+        )
+        stack.enter_context(
+            patch(
+                "leanprompt.providers.deepseek.DeepSeekProvider.generate",
+                new=AsyncMock(return_value='{"result": 2}'),
+            )
+        )
+        yield

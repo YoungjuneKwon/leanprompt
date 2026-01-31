@@ -34,12 +34,7 @@ class LeanPrompt:
         self.on_validation_error = on_validation_error
         self.max_retries = max_retries
         self.api_prefix = self._normalize_prefix(api_prefix)
-        ws_path_input = ws_path or "/ws"
-        is_relative_ws = bool(ws_path_input) and not ws_path_input.startswith("/")
-        normalized_ws_path = self._normalize_ws_path(ws_path_input)
-        if self.api_prefix and is_relative_ws:
-            normalized_ws_path = self._apply_prefix(normalized_ws_path)
-        self.ws_path = normalized_ws_path
+        self.ws_path = self._initialize_ws_path(ws_path)
         self.ws_auth = ws_auth
 
         # Initialize provider
@@ -110,6 +105,14 @@ class LeanPrompt:
         if normalized == self.api_prefix or normalized.startswith(f"{self.api_prefix}/"):
             return normalized
         return f"{self.api_prefix}{normalized}"
+
+    def _initialize_ws_path(self, ws_path: str) -> str:
+        ws_path_input = ws_path or "/ws"
+        is_relative_ws = bool(ws_path_input) and not ws_path_input.startswith("/")
+        normalized_ws_path = self._normalize_ws_path(ws_path_input)
+        if self.api_prefix and is_relative_ws:
+            normalized_ws_path = self._apply_prefix(normalized_ws_path)
+        return normalized_ws_path
 
     def _strip_prefix(self, path: str) -> str:
         normalized = self._normalize_route_path(path)
