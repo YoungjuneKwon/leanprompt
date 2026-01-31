@@ -80,7 +80,7 @@ class Guard:
 
     @staticmethod
     def jwt(validator_func: Callable[[Any], Any]):
-        """Backward-compatible alias for Guard.auth()."""
+        """Alias for Guard.auth() for JWT-style authentication."""
         return Guard.auth(validator_func)
 
     @staticmethod

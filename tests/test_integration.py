@@ -27,13 +27,9 @@ def create_app():
     provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
     provider_name, api_key = provider_env.split("|")
 
-    def has_auth_header(request: Request) -> bool:
+    def has_auth_header(payload: Request | WebSocket) -> bool:
         # Test helper: only checks for header presence.
-        return bool(request.headers.get("authorization"))
-
-    def require_ws_jwt(websocket: WebSocket) -> bool:
-        # Test helper: only checks for header presence.
-        return bool(websocket.headers.get("authorization"))
+        return bool(payload.headers.get("authorization"))
 
     lp = LeanPrompt(
         app,
@@ -42,7 +38,7 @@ def create_app():
         api_key=api_key,
         api_prefix="/api",
         ws_path="ws",
-        ws_auth=require_ws_jwt,
+        ws_auth=has_auth_header,
     )
 
     @lp.route("/add", prompt_file="add.md")

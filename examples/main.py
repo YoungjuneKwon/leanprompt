@@ -28,14 +28,14 @@ api_prefix = os.getenv("LEANPROMPT_API_PREFIX", "")
 ws_path = os.getenv("LEANPROMPT_WS_PATH", "/ws")
 
 
-def _extract_auth_header(payload: Request | WebSocket) -> str:
+def extract_auth_header(payload: Request | WebSocket) -> str:
     return payload.headers.get("authorization", "")
 
 
 def require_jwt(payload: Request | WebSocket) -> bool:
     # NOTE: Example only. Insecure for production. Validate JWT signature, expiry, and claims.
     # Example: jwt.decode(token, key, algorithms=["HS256"])
-    return bool(_extract_auth_header(payload))
+    return bool(extract_auth_header(payload))
 
 
 lp = LeanPrompt(

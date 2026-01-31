@@ -114,7 +114,8 @@ class LeanPrompt:
             normalized_ws_path = self._apply_prefix(normalized_ws_path)
         if normalized_ws_path == "/":
             raise ValueError(
-                "ws_path cannot be '/' as it would conflict with HTTP routes. Use a path like '/ws'."
+                "ws_path cannot be '/' as it would shadow all HTTP routes on the same app. "
+                "Use a path like '/ws'."
             )
         return normalized_ws_path
 
