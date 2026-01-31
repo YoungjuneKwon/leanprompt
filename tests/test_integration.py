@@ -29,9 +29,11 @@ def create_app():
     provider_name, api_key = provider_env.split("|")
 
     def require_jwt(request: Request) -> bool:
+        # Test helper: only checks for header presence.
         return bool(request.headers.get("authorization"))
 
     def require_ws_jwt(websocket: WebSocket) -> bool:
+        # Test helper: only checks for header presence.
         return bool(websocket.headers.get("authorization"))
 
     lp = LeanPrompt(

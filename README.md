@@ -60,7 +60,7 @@ lp = LeanPrompt(
     prompt_dir="prompts",
     api_key=api_key,
     api_prefix="/api",
-    ws_path="ws",  # -> /api/ws/{client_id}
+    ws_path="ws",  # relative -> /api/ws/{client_id}
 )
 
 @lp.route("/calc/add", prompt_file="add.md")
@@ -96,6 +96,7 @@ from fastapi import Request
 from leanprompt import Guard
 
 def require_jwt(request: Request) -> bool:
+    # Example only. Replace with real JWT validation.
     return bool(request.headers.get("authorization"))
 
 @lp.route("/secure/add", prompt_file="add.md")
@@ -111,6 +112,7 @@ For WebSocket authentication, pass a validation hook when you construct `LeanPro
 from fastapi import WebSocket
 
 def require_ws_jwt(websocket: WebSocket) -> bool:
+    # Example only. Replace with real JWT validation.
     return bool(websocket.headers.get("authorization"))
 
 lp = LeanPrompt(

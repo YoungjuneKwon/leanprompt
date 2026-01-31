@@ -111,13 +111,17 @@ class LeanPrompt:
             return normalized
         return f"{self.api_prefix}{normalized}"
 
+    async def _run_auth_hook(self, auth_hook: Callable[[Any], Any], payload: Any) -> Any:
+        result = auth_hook(payload)
+        if inspect.isawaitable(result):
+            result = await result
+        return result
+
     async def _authorize_websocket(self, websocket: WebSocket) -> bool:
         if not self.ws_auth:
             return True
         try:
-            result = self.ws_auth(websocket)
-            if inspect.isawaitable(result):
-                result = await result
+            result = await self._run_auth_hook(self.ws_auth, websocket)
         except HTTPException:
             await websocket.close(code=1008)
             return False
@@ -130,9 +134,7 @@ class LeanPrompt:
         auth_validator = getattr(func, "_auth_validator", None)
         if not auth_validator:
             return
-        auth_result = auth_validator(request)
-        if inspect.isawaitable(auth_result):
-            auth_result = await auth_result
+        auth_result = await self._run_auth_hook(auth_validator, request)
         if auth_result is False:
             raise HTTPException(status_code=401, detail="Unauthorized")
 
