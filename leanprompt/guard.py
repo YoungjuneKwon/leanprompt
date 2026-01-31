@@ -35,6 +35,9 @@ class Guard:
                 return await func(*args, **kwargs)
 
             wrapper._output_model = model
+            existing_auth = getattr(func, "_auth_validator", None)
+            if existing_auth is not None:
+                wrapper._auth_validator = existing_auth
             return wrapper
 
         return decorator
@@ -48,6 +51,28 @@ class Guard:
                 return await func(*args, **kwargs)
 
             wrapper._custom_validator = validator_func
+            existing_auth = getattr(func, "_auth_validator", None)
+            if existing_auth is not None:
+                wrapper._auth_validator = existing_auth
+            return wrapper
+
+        return decorator
+
+    @staticmethod
+    def jwt(validator_func: Callable[[Any], Any]):
+        def decorator(func: Callable):
+            @functools.wraps(func)
+            async def wrapper(*args, **kwargs):
+                func._auth_validator = validator_func
+                return await func(*args, **kwargs)
+
+            wrapper._auth_validator = validator_func
+            existing_output = getattr(func, "_output_model", None)
+            if existing_output is not None:
+                wrapper._output_model = existing_output
+            existing_custom = getattr(func, "_custom_validator", None)
+            if existing_custom is not None:
+                wrapper._custom_validator = existing_custom
             return wrapper
 
         return decorator

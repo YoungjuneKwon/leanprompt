@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, WebSocket
 from leanprompt import LeanPrompt, Guard
 from pydantic import BaseModel
 import uvicorn
@@ -24,8 +24,26 @@ app = FastAPI()
 provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
 provider_name, api_key = provider_env.split("|", 1)
 
+api_prefix = os.getenv("LEANPROMPT_API_PREFIX", "")
+ws_path = os.getenv("LEANPROMPT_WS_PATH", "/ws")
+
+
+def require_jwt(request: Request) -> bool:
+    return bool(request.headers.get("authorization"))
+
+
+def require_ws_jwt(websocket: WebSocket) -> bool:
+    return bool(websocket.headers.get("authorization"))
+
+
 lp = LeanPrompt(
-    app, provider=provider_name, prompt_dir="examples/prompts", api_key=api_key
+    app,
+    provider=provider_name,
+    prompt_dir="examples/prompts",
+    api_key=api_key,
+    api_prefix=api_prefix,
+    ws_path=ws_path,
+    ws_auth=require_ws_jwt,
 )
 
 
@@ -43,6 +61,16 @@ async def add(user_input: str):
 async def multiply(user_input: str):
     """
     Performs multiplication based on user input.
+    """
+    pass
+
+
+@lp.route("/secure/add", prompt_file="add.md")
+@Guard.jwt(require_jwt)
+@Guard.validate(CalculationResult)
+async def secure_add(user_input: str):
+    """
+    Performs addition but requires a JWT in the Authorization header.
     """
     pass
 

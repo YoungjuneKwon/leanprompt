@@ -3,7 +3,7 @@ import pytest
 import asyncio
 import json
 from unittest.mock import patch, AsyncMock
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 from leanprompt import LeanPrompt, Guard
@@ -28,8 +28,20 @@ def create_app():
     provider_env = os.getenv("LEANPROMPT_LLM_PROVIDER", "openai|dummy_key")
     provider_name, api_key = provider_env.split("|")
 
+    def require_jwt(request: Request) -> bool:
+        return bool(request.headers.get("authorization"))
+
+    def require_ws_jwt(websocket: WebSocket) -> bool:
+        return bool(websocket.headers.get("authorization"))
+
     lp = LeanPrompt(
-        app, provider=provider_name, prompt_dir="examples/prompts", api_key=api_key
+        app,
+        provider=provider_name,
+        prompt_dir="examples/prompts",
+        api_key=api_key,
+        api_prefix="/api",
+        ws_path="ws",
+        ws_auth=require_ws_jwt,
     )
 
     @lp.route("/add", prompt_file="add.md")
@@ -40,6 +52,12 @@ def create_app():
     @lp.route("/multiply", prompt_file="multiply.md")
     @Guard.validate(CalculationResult)
     async def multiply(user_input: str):
+        pass
+
+    @lp.route("/secure/add", prompt_file="add.md")
+    @Guard.jwt(require_jwt)
+    @Guard.validate(CalculationResult)
+    async def secure_add(user_input: str):
         pass
 
     @lp.route("/add_implicit")
@@ -79,8 +97,7 @@ from leanprompt.providers.openai import OpenAIProvider
 # ... (create_app logic remains mostly same, ensuring provider is mocked later)
 
 
-@pytest.mark.asyncio
-async def test_websocket_routing_and_context():
+def test_websocket_routing_and_context():
     """Verify WebSocket routing based on 'path' and separate context chains per path"""
 
     # Run against REAL provider (env var sourced from .bashrc)
@@ -94,7 +111,9 @@ async def test_websocket_routing_and_context():
     app = create_app()
     client = TestClient(app)
 
-    with client.websocket_connect("/ws/test_client") as websocket:
+    with client.websocket_connect(
+        "/api/ws/test_client", headers={"Authorization": "Bearer test"}
+    ) as websocket:
         # 1. Request to /add path (Add Prompt)
         # Expected behavior: The LLM should follow add.md instructions (Calculator, JSON output)
         req_add = {"path": "/add", "message": "10 + 20"}
@@ -137,3 +156,11 @@ async def test_websocket_routing_and_context():
         # Simple keyword check
         response_text = resp_chat2["response"].lower()
         assert "red" in response_text or "yellow" in response_text
+
+
+def test_secure_route_requires_jwt():
+    app = create_app()
+    client = TestClient(app)
+
+    response = client.post("/api/secure/add", json={"message": "1 + 1"})
+    assert response.status_code == 401
